@@ -1,11 +1,9 @@
 import logging
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from telegram.ext import Updater, CommandHandler
 
-from commands import *
-from handlers import *
-# from handlers.candies import input_player_name_handler, input_player_age_handler, PLAYER_NAME_STATE, \
-#     PLAYER_AGE_STATE, PLAYER_GENDER_STATE, input_player_gender_handler
+from base import *
+from candies import *
 
 # Enable logging
 logging.basicConfig(
@@ -27,17 +25,7 @@ def main() -> None:
 
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler("start", start))
-    # dispatcher.add_handler(CommandHandler("candies", candiesCommand))
-    candiesConvHandler = ConversationHandler(
-        entry_points=[CommandHandler('candies', candiesCommand)],
-        states={
-            ALL_NUM_STATE: [MessageHandler(Filters.text, inputAllNumHandler)],
-            DECR_NUM_STATE: [MessageHandler(Filters.text, inputDecrNumHandler)],
-            PLAYER_TURN_STATE: [MessageHandler(Filters.text, playerTurnHandler)],
-        },
-        fallbacks=[],
-    )
-    dispatcher.add_handler(candiesConvHandler)
+    initCandiesConversation(dispatcher)
 
     # Start the Bot
     updater.start_polling()
