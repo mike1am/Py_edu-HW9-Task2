@@ -9,4 +9,4 @@ def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(f"Привет, {user.first_name}!\nСписок команд:" +
         "\n/candies - игра в конфеты"
     )
-
+    
