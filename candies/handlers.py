@@ -66,7 +66,7 @@ def inputMaxDecrHandler(update: Update, context: CallbackContext) -> int:
             InlineKeyboardButton("Вы, игрок", callback_data='player')]]
     )
     
-    update.message.reply_text("Кто будет ходить первым?", reply_markup=replyMarkup)
+    update.message.reply_text("Кто будет брать первым?", reply_markup=replyMarkup)
     return FIRST_TURN_STATE
 
 
@@ -77,14 +77,14 @@ def kbFirstTurnHandler(update: Update, context: CallbackContext) -> int:
     query.answer()
 
     if query.data == 'bot':
-        botAnswer = botTurnOutput(update)
+        botAnswer = botTurnOutput()
         messageText += "\n" + botAnswer[1]
         
         if botAnswer[0]:
             query.edit_message_text(messageText)
             return ConversationHandler.END
 
-    messageText += "\n\nСколько возьмёте конфет?"
+    messageText += "\n\nСколько берёте конфет?"
     query.edit_message_text(messageText)
 
     return PLAYER_TURN_STATE
@@ -95,13 +95,13 @@ def playerTurnHandler(update: Update, context: CallbackContext) -> int:
     
     if not userInput.isdigit() or int(userInput) <= 0:
         update.message.reply_text("Вы должны ввести натуральное число." +
-            "\nСколько возьмёте конфет?")
+            "\nСколько берёте конфет?")
         return PLAYER_TURN_STATE
     
     decr = int(userInput)
     if decr > getMaxDecr() or decr > getTotalCandies():
         update.message.reply_text("Так много конфет взять нельзя." +
-            "\nСколько возьмёте конфет?")
+            "\nСколько берёте конфет?")
         return PLAYER_TURN_STATE
     
     playerTurn(decr)
@@ -110,24 +110,24 @@ def playerTurnHandler(update: Update, context: CallbackContext) -> int:
         update.message.reply_text("Игра закончена. Вы выиграли. Поздравляю!")
         return ConversationHandler.END
         
-    botAnswer = botTurnOutput(update)
+    botAnswer = botTurnOutput()
     messageText = botAnswer[1]
 
     if botAnswer[0]:
         update.message.reply_text(messageText)
         return ConversationHandler.END
 
-    messageText += "\n\nСколько возьмёте конфет?"
+    messageText += "\n\nСколько берёте конфет?"
     update.message.reply_text(messageText)
 
     return PLAYER_TURN_STATE
 
 
 # Возвращает картеж: (признак завершения игры, сообщение для вывода)
-def botTurnOutput(update: Update):
+def botTurnOutput():
     decr = botTurn()
     
     if not getTotalCandies():
-        return (True, f"Я взял {decr} конфет\nИгра закончена. Я выиграл")
+        return (True, f"Я взял {decr} конфет\nИгра закончена. Вы проиграли.")
     else:
         return (False, f"Я взял {decr} конфет\nОсталось {getTotalCandies()}")
