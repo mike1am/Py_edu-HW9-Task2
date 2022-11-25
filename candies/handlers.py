@@ -1,6 +1,6 @@
-from telegram import Update, ReplyKeyboardMarkup #, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext, ConversationHandler, CommandHandler,\
-        MessageHandler, Filters
+        MessageHandler, Filters, CallbackQueryHandler
 
 from candies.model import setTotalCandies, setMaxDecr, getTotalCandies, getMaxDecr,\
         botTurn, playerTurn
@@ -19,7 +19,7 @@ def initCandiesConversation (dispatcher) -> None:
         states={
             TOTAL_CANDIES_STATE: [MessageHandler(Filters.text, inputTotalCandiesHandler)],
             MAX_DECR_STATE: [MessageHandler(Filters.text, inputMaxDecrHandler)],
-            FIRST_TURN_STATE: [MessageHandler(Filters.text, inputFirstTurnHandler)],
+            FIRST_TURN_STATE: [CallbackQueryHandler(kbFirstTurnHandler)],
             PLAYER_TURN_STATE: [MessageHandler(Filters.text, playerTurnHandler)],
         },
         fallbacks=[],
@@ -60,29 +60,33 @@ def inputMaxDecrHandler(update: Update, context: CallbackContext) -> int:
         return MAX_DECR_STATE
     else: setMaxDecr(int(userInput))
 
-    replyMarkup = ReplyKeyboardMarkup([
-        ["Я, бот", "Вы, игрок"],
-    ], resize_keyboard=True, one_time_keyboard=True)
-
-    # replyMarkup = InlineKeyboardMarkup(
-    #     [[
-    #         InlineKeyboardButton("Я, бот", callback_data='bot'),
-    #         InlineKeyboardButton("Вы, игрок", callback_data='player')]]
-    # )
+    replyMarkup = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton("Я, бот", callback_data='bot'),
+            InlineKeyboardButton("Вы, игрок", callback_data='player')]]
+    )
     
     update.message.reply_text("Кто будет ходить первым?", reply_markup=replyMarkup)
     return FIRST_TURN_STATE
 
 
-def inputFirstTurnHandler(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text("Начинаем игру")
+def kbFirstTurnHandler(update: Update, context: CallbackContext) -> int:
+    messageText = ("Начинаем игру")
 
-    if update.message.text == "Я, бот":
-        if botTurnOutput(update):
+    query = update.callback_query
+    query.answer()
+
+    if query.data == 'bot':
+        botAnswer = botTurnOutput(update)
+        messageText += "\n" + botAnswer[1]
+        
+        if botAnswer[0]:
+            query.edit_message_text(messageText)
             return ConversationHandler.END
 
-    update.message.reply_text("Сколько возьмёте конфет?")
-    
+    messageText += "\n\nСколько возьмёте конфет?"
+    query.edit_message_text(messageText)
+
     return PLAYER_TURN_STATE
 
 
@@ -106,21 +110,24 @@ def playerTurnHandler(update: Update, context: CallbackContext) -> int:
         update.message.reply_text("Игра закончена. Вы выиграли. Поздравляю!")
         return ConversationHandler.END
         
-    if botTurnOutput(update):
+    botAnswer = botTurnOutput(update)
+    messageText = botAnswer[1]
+
+    if botAnswer[0]:
+        update.message.reply_text(messageText)
         return ConversationHandler.END
 
-    update.message.reply_text("Сколько возьмёте конфет?")
+    messageText += "\n\nСколько возьмёте конфет?"
+    update.message.reply_text(messageText)
 
     return PLAYER_TURN_STATE
 
 
-# Возвращает True, если игра закончена
+# Возвращает картеж: (признак завершения игры, сообщение для вывода)
 def botTurnOutput(update: Update):
     decr = botTurn()
     
     if not getTotalCandies():
-        update.message.reply_text(f"Я взял {decr} конфет\nИгра закончена. Я выиграл")
-        return True
+        return (True, f"Я взял {decr} конфет\nИгра закончена. Я выиграл")
     else:
-        update.message.reply_text(f"Я взял {decr} конфет\nОсталось {getTotalCandies()}")
-        return False
+        return (False, f"Я взял {decr} конфет\nОсталось {getTotalCandies()}")
