@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = "5655208234:AAHXRiFZdXwcPN9GleFwA7LA6S-vWdUBfWo"
+TOKEN = ""
 
 
 def main() -> None:
