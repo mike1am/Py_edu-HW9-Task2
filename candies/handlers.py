@@ -77,7 +77,7 @@ def inputMaxDecrHandler(update: Update, context: CallbackContext) -> int:
 def inputFirstTurnHandler(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Начинаем игру")
 
-    if update.message.text == 'bot':
+    if update.message.text == "Я, бот":
         if botTurnOutput(update):
             return ConversationHandler.END
 
